@@ -1,0 +1,1 @@
+from app.var import app, db, bcrypt

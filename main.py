@@ -1,6 +1,6 @@
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
+from app import app
+from flask import request, jsonify
+from db.functions import create_user
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -9,10 +9,13 @@ def register():
         username = data["username"]
         password = data["password"]
 
+        create_user(username=username, password=password)
+
         return jsonify({'message': 'deu boa', "username": username, "password": password})
     
-    except:
-        return jsonify({"message": "deu ruim"})
+    except Exception as e:
+
+        return jsonify({"message": "deu ruim", "error": e})
 
 @app.route('/login', methods=['POST'])
 def login():
