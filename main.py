@@ -33,4 +33,6 @@ def login():
 def get_data():
     return 'b'
 
-app.run(port=8890)
+app.run(debug=True, host='0.0.0.0', port=8890)
+
+
