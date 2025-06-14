@@ -1,2 +1,6 @@
 2025-06-14 19:51:27,403 - INFO - Mensagem enviada: oi
 2025-06-14 19:51:30,462 - INFO - Mensagem enviada: rrr
+2025-06-14 20:04:09,319 - INFO - Mensagem enviada: olá
+2025-06-14 20:04:10,906 - INFO - Mensagem enviada: g
+2025-06-14 20:04:12,314 - INFO - Mensagem enviada: dad
+2025-06-14 20:06:29,495 - INFO - Mensagem enviada: oi

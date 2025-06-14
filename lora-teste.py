@@ -1,46 +1,71 @@
 import meshtastic
 import time
+import threading
 import logging
-from meshtastic.serial_interface import SerialInterface
+from meshtastic.stream_interface import StreamInterface
 
-# Configurar o logging
+# CONFIGURAÇÃO DO LOGGING
 logging.basicConfig(
     filename="meshtastic_log.txt",
-    filemode="a",  # "a" para adicionar, "w" para sobrescrever a cada execução
+    filemode="a",
     format="%(asctime)s - %(levelname)s - %(message)s",
     level=logging.INFO
 )
 
-# Conectar ao dispositivo Meshtastic via porta USB
-device1 = SerialInterface("/dev/ttyACM0")  # Altere conforme a porta correta
+# AJUSTE AQUI: porta do dispositivo Meshtastic
+# Linux: ex. /dev/ttyACM0 | Windows: ex. COM3
+PORTA_SERIAL = "/dev/ttyACM0"
 
-# Função para enviar mensagem
+# CONECTAR AO DISPOSITIVO
+device = StreamInterface(devPath=PORTA_SERIAL)
+
+# FUNÇÃO DE ENVIO DE MENSAGEM
 def send_message(device, message, channel=0):
     device.sendText(message, channelIndex=channel)
-    print(f"Mensagem enviada: {message}")
-    logging.info(f"Mensagem enviada: {message}")
+    print(f"[ENVIADO] {message}")
+    logging.info(f"[ENVIADO] {message}")
 
-# Função para receber mensagens
+# CALLBACK PARA RECEBER MENSAGENS
 def on_receive(packet, interface):
-    if 'decoded' in packet and packet['decoded']['portnum'] == 'TEXT_MESSAGE_APP':
-        received_msg = packet['decoded']['text']
-        print(f"Mensagem recebida em {interface}: {received_msg}")
-        logging.info(f"Mensagem recebida em {interface}: {received_msg} | Raw: {packet}")
+    try:
+        if 'decoded' in packet and packet['decoded']['portnum'] == 'TEXT_MESSAGE_APP':
+            msg = packet['decoded']['text']
+            print(f"[RECEBIDO] {msg}")
+            logging.info(f"[RECEBIDO] {msg} | RAW: {packet}")
+    except Exception as e:
+        logging.error(f"Erro ao processar pacote recebido: {e}")
 
-# Registrar callback para receber mensagens
-device1.onReceive = on_receive
+# REGISTRA O CALLBACK
+device.onReceive = on_receive
+print("✅ Comunicação Meshtastic iniciada.")
+print("Digite mensagens para enviar. Digite 'sair' para encerrar.\n")
 
-print("Comunicação Meshtastic iniciada!")
-print("Digite mensagens para enviar ou 'sair' para encerrar.")
-
-try:
+# LOOP DE ENTRADA DO USUÁRIO EM UMA THREAD
+def input_loop():
     while True:
-        message = input("Mensagem: ")
-        if message.lower() == 'sair':
-            break
-        send_message(device1, message)
-        time.sleep(0.5)  # Pausa para evitar sobrecarga
-finally:
-    device1.close()
-    print("Comunicação encerrada.")
-    logging.info("Comunicação encerrada.")
+        try:
+            msg = input("Mensagem: ")
+            if msg.lower() == 'sair':
+                print("Encerrando comunicação...")
+                device.close()
+                break
+            send_message(device, msg)
+        except Exception as e:
+            logging.error(f"Erro na entrada de mensagem: {e}")
+
+# INICIA THREAD DE ENTRADA
+input_thread = threading.Thread(target=input_loop)
+input_thread.daemon = True
+input_thread.start()
+
+# LOOP PRINCIPAL PARA MANTER O SCRIPT RODANDO
+try:
+    while device.isOpen:
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    device.close()
+    print("\nInterrompido manualmente.")
+    logging.info("Encerrado por KeyboardInterrupt.")
+
+print("🔒 Comunicação encerrada.")
+logging.info("Comunicação finalizada.")
