@@ -4,3 +4,4 @@
 2025-06-14 20:04:10,906 - INFO - Mensagem enviada: g
 2025-06-14 20:04:12,314 - INFO - Mensagem enviada: dad
 2025-06-14 20:06:29,495 - INFO - Mensagem enviada: oi
+2025-06-14 20:18:34,620 - INFO - Comunicação finalizada.

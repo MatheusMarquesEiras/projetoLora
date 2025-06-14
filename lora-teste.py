@@ -2,7 +2,7 @@ import meshtastic
 import time
 import threading
 import logging
-from meshtastic.stream_interface import StreamInterface
+from meshtastic.serial_interface import SerialInterface
 import platform
 
 sistem = platform.system()
@@ -15,16 +15,14 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# AJUSTE AQUI: porta do dispositivo Meshtastic
-# Linux: ex. /dev/ttyACM0 | Windows: ex. COM3
-
+# CONFIGURAÇÃO DA PORTA SERIAL
 if sistem == "Windows":
     PORTA_SERIAL = "COM3"
 else:
     PORTA_SERIAL = "/dev/ttyACM0"
 
 # CONECTAR AO DISPOSITIVO
-device = StreamInterface(devPath=PORTA_SERIAL)
+device = SerialInterface(PORTA_SERIAL)
 
 # FUNÇÃO DE ENVIO DE MENSAGEM
 def send_message(device, message, channel=0):
@@ -47,13 +45,18 @@ device.onReceive = on_receive
 print("✅ Comunicação Meshtastic iniciada.")
 print("Digite mensagens para enviar. Digite 'sair' para encerrar.\n")
 
+# VARIÁVEL DE CONTROLE PARA ENCERRAMENTO
+running = True
+
 # LOOP DE ENTRADA DO USUÁRIO EM UMA THREAD
 def input_loop():
-    while True:
+    global running
+    while running:
         try:
             msg = input("Mensagem: ")
             if msg.lower() == 'sair':
                 print("Encerrando comunicação...")
+                running = False
                 device.close()
                 break
             send_message(device, msg)
@@ -67,10 +70,11 @@ input_thread.start()
 
 # LOOP PRINCIPAL PARA MANTER O SCRIPT RODANDO
 try:
-    while device.isOpen:
+    while running:
         time.sleep(0.1)
 except KeyboardInterrupt:
     device.close()
+    running = False
     print("\nInterrompido manualmente.")
     logging.info("Encerrado por KeyboardInterrupt.")
 
