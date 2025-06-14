@@ -3,6 +3,9 @@ import time
 import threading
 import logging
 from meshtastic.stream_interface import StreamInterface
+import platform
+
+sistem = platform.system()
 
 # CONFIGURAÇÃO DO LOGGING
 logging.basicConfig(
@@ -14,7 +17,11 @@ logging.basicConfig(
 
 # AJUSTE AQUI: porta do dispositivo Meshtastic
 # Linux: ex. /dev/ttyACM0 | Windows: ex. COM3
-PORTA_SERIAL = "/dev/ttyACM0"
+
+if sistem == "Windows":
+    PORTA_SERIAL = "COM3"
+else:
+    PORTA_SERIAL = "/dev/ttyACM0"
 
 # CONECTAR AO DISPOSITIVO
 device = StreamInterface(devPath=PORTA_SERIAL)
