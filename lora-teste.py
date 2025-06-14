@@ -15,9 +15,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-# AJUSTE AQUI: porta do dispositivo Meshtastic
-# Linux: ex. /dev/ttyACM0 | Windows: ex. COM3
-
+# CONFIGURAÇÃO DA PORTA SERIAL
 if sistem == "Windows":
     PORTA_SERIAL = "COM3"
 else:
@@ -47,13 +45,18 @@ device.onReceive = on_receive
 print("✅ Comunicação Meshtastic iniciada.")
 print("Digite mensagens para enviar. Digite 'sair' para encerrar.\n")
 
+# VARIÁVEL DE CONTROLE PARA ENCERRAMENTO
+running = True
+
 # LOOP DE ENTRADA DO USUÁRIO EM UMA THREAD
 def input_loop():
-    while True:
+    global running
+    while running:
         try:
             msg = input("Mensagem: ")
             if msg.lower() == 'sair':
                 print("Encerrando comunicação...")
+                running = False
                 device.close()
                 break
             send_message(device, msg)
@@ -67,10 +70,11 @@ input_thread.start()
 
 # LOOP PRINCIPAL PARA MANTER O SCRIPT RODANDO
 try:
-    while device.isOpen:
+    while running:
         time.sleep(0.1)
 except KeyboardInterrupt:
     device.close()
+    running = False
     print("\nInterrompido manualmente.")
     logging.info("Encerrado por KeyboardInterrupt.")
 
