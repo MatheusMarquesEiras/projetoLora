@@ -2,7 +2,7 @@ import meshtastic
 import time
 import threading
 import logging
-from meshtastic.stream_interface import StreamInterface
+from meshtastic.serial_interface import SerialInterface
 import platform
 
 sistem = platform.system()
@@ -24,7 +24,7 @@ else:
     PORTA_SERIAL = "/dev/ttyACM0"
 
 # CONECTAR AO DISPOSITIVO
-device = StreamInterface(devPath=PORTA_SERIAL)
+device = SerialInterface(PORTA_SERIAL)
 
 # FUNÇÃO DE ENVIO DE MENSAGEM
 def send_message(device, message, channel=0):
