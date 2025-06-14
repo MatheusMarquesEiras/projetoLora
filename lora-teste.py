@@ -3,7 +3,7 @@ import time
 from meshtastic.serial_interface import SerialInterface
 
 # Conectar ao dispositivo Meshtastic via porta USB
-device1 = SerialInterface("/dev/ttyACM1")  # Porta identificada para o dispositivo Meshtastic
+device1 = SerialInterface("/dev/ttyACM0")  # Porta identificada para o dispositivo Meshtastic
 
 # Função para enviar mensagem
 def send_message(device, message, channel=0):
@@ -13,7 +13,7 @@ def send_message(device, message, channel=0):
 # Função para receber mensagens
 def on_receive(packet, interface):
     if 'decoded' in packet and packet['decoded']['portnum'] == 'TEXT_MESSAGE_APP':
-        print(f"Mensagem recebida em {interface}: {packet['decoded']['text']}")
+        print(f"Mensagem recebida em {interface}: {packet['decoded']['text']} ========= {packet}")
 
 # Registrar callback para receber mensagens
 device1.onReceive = on_receive
