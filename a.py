@@ -1,84 +1,43 @@
-import meshtastic
 from meshtastic.serial_interface import SerialInterface
-import serial.tools.list_ports
-import time
-import logging
+import platform
+from datetime import datetime
 
-# Configurar logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', filename='meshtastic.log')
+sistem = platform.system()
 
-# Listar portas seriais disponíveis
-print("Portas seriais disponíveis:")
-ports = serial.tools.list_ports.comports()
-for port in ports:
-    print(port.device)
+# CONFIGURAÇÃO DA PORTA SERIAL
+if sistem == "Windows":
+    PORTA_SERIAL = "COM3"
+else:
+    PORTA_SERIAL = "/dev/ttyACM0"
 
-# Conectar ao dispositivo Meshtastic via serial
-port = "COM3"  # Ajuste para a porta correta após verificar
-try:
-    device = SerialInterface(port)
-    print(f"Conectado ao dispositivo Meshtastic na porta {port}")
-except Exception as e:
-    print(f"Erro ao conectar ao dispositivo: {e}")
-    logging.error(f"Erro ao conectar ao dispositivo: {e}")
-    exit(1)
+# CONECTAR AO DISPOSITIVO
+device = SerialInterface(PORTA_SERIAL)
 
-# Função para enviar mensagem
+# FUNÇÃO DE ENVIO DE MENSAGEM
 def send_message(device, message, channel=0):
-    try:
-        device.sendText(message, channelIndex=channel)
-        print(f"Mensagem enviada: {message}")
-        logging.info(f"Mensagem enviada: {message}")
-    except Exception as e:
-        print(f"Erro ao enviar mensagem: {e}")
-        logging.error(f"Erro ao enviar mensagem: {e}")
+    device.sendText(message, channelIndex=channel)
+    print(f"[ENVIADO] {message}")
 
-# Função para receber mensagens
-def on_receive(packet, interface):
-    try:
-        if 'decoded' in packet and packet['decoded']['portnum'] == 'TEXT_MESSAGE_APP':
-            sender = packet.get('fromId', 'Unknown')
-            message = packet['decoded'].get('text', '')
-            if not message:
-                try:
-                    message = packet['decoded']['payload'].decode('utf-8', errors='ignore')
-                except:
-                    logging.error("Erro ao decodificar payload")
-                    return
-            print(f"{sender}: {message}", flush=True)
-            logging.info(f"Mensagem recebida de {sender}: {message}")
-    except Exception as e:
-        logging.error(f"Erro ao processar pacote: {e}")
+print("✅ Comunicação Meshtastic iniciada.")
+print("Digite mensagens para enviar. Digite 'sair' para encerrar.\n")
 
-# Registrar callback para receber mensagens
-try:
-    device.onReceive = on_receive
-    print("Escutando mensagens da rede mesh...")
-    print("Digite mensagens para enviar ou 'sair' para encerrar.")
-except Exception as e:
-    print(f"Erro ao registrar callback: {e}")
-    logging.error(f"Erro ao registrar callback: {e}")
-    try:
-        device.close()
-    except:
-        pass
-    exit(1)
-
+# LOOP PRINCIPAL PARA MANTER O SCRIPT RODANDO
 try:
     while True:
-        message = input("Mensagem: ")
-        if message.lower() == 'sair':
-            break
-        send_message(device, message)
-        time.sleep(0.5)
+        try:
+            msg = input("Mensagem: ")
+            now = datetime.now()
+            date = now.strftime("%d/%m/%Y %H:%M:%S")
+            msg = f"{{'hash': '{msg}', 'date': '{date}'}}"
+            if msg.lower() == 'sair':
+                print("Encerrando comunicação...")
+                device.close()
+                break
+            send_message(device, msg)
+        except Exception as e:
+            print(f"Erro na entrada de mensagem: {e}")
 except KeyboardInterrupt:
-    print("\nPrograma interrompido pelo usuário")
-    logging.info("Programa interrompido pelo usuário")
-finally:
-    try:
-        device.close()
-        print("Comunicação encerrada.")
-        logging.info("Comunicação encerrada.")
-    except Exception as e:
-        print(f"Erro ao fechar a conexão: {e}")
-        logging.error(f"Erro ao fechar a conexão: {e}")
+    device.close()
+    print("\nInterrompido manualmente.")
+
+print("🔒 Comunicação encerrada.")
