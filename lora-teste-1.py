@@ -2,13 +2,26 @@ import meshtastic
 from meshtastic.serial_interface import SerialInterface
 import time
 import logging
+import platform
+
+sistem = platform.system()
 
 # Configurar logging para depuração detalhada
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    filename="meshtastic_log.txt",
+    filemode="a",
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Conectar ao dispositivo Meshtastic via serial
+
+if sistem == "Windows":
+    PORTA_SERIAL = "COM3"
+else:
+    PORTA_SERIAL = "/dev/ttyACM0"
+
 try:
-    device = SerialInterface("COM5")  # Ajuste a porta serial se necessário
+    device = SerialInterface(PORTA_SERIAL)  # Ajuste a porta serial se necessário
     logging.info("Conectado ao dispositivo Meshtastic na porta COM5")
 except Exception as e:
     logging.error(f"Erro ao conectar ao dispositivo: {e}")

@@ -33,10 +33,11 @@ def send_message(device, message, channel=0):
 # CALLBACK PARA RECEBER MENSAGENS
 def on_receive(packet, interface):
     try:
-        if 'decoded' in packet and packet['decoded']['portnum'] == 'TEXT_MESSAGE_APP':
-            msg = packet['decoded']['text']
-            print(f"[RECEBIDO] {msg}")
-            logging.info(f"[RECEBIDO] {msg} | RAW: {packet}")
+        logging.info(f"Pacote recebido {packet}")
+        
+        msg = packet['decoded']['text']
+        print(f"[RECEBIDO] {msg}")
+        logging.info(f"[RECEBIDO] {msg} | RAW: {packet}")
     except Exception as e:
         logging.error(f"Erro ao processar pacote recebido: {e}")
 
