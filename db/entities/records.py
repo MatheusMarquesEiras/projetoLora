@@ -9,4 +9,4 @@ class Records(Base):
     date = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
-        return f"id: {self.id} hash: {self.hash} date: {self.date} user_id: {self.user_id}" 
+        return f"id: {self.id} hash: {self.hash} date: {self.date}" 
