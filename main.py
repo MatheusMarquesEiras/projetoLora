@@ -1,8 +1,8 @@
 from app import app
 from flask import request, jsonify
-from db.functions import create_user, create_record
+from db.functions import create_user, create_record, get_records
 import meshtastic
-import meshtastic.serial_interface
+import datetime, time
 from pubsub import pub
 import threading
 import datetime
@@ -12,35 +12,38 @@ interface = None  # vai ser inicializado em uma função
 
 import json
 
-def onReceive(packet, interface):
-    print("Mensagem recebida:")
-    try:
-        data = packet['decoded']['text']
-        print(data)
-        data_dict = json.loads(data.replace("'", '"'))
-        date_str = data_dict['date']
-        date_obj = datetime.datetime.strptime(date_str, '%d/%m/%Y %H:%M:%S')
-        create_record(hash=data_dict['hash'], date=date_obj)
-    except KeyError:
-        pass
-        # print("Pacote recebido, mas sem texto")
-    except json.JSONDecodeError as e:
-        print("Erro ao decodificar JSON:", e)
-    except Exception as e:
-        print(f"erro: {e}")
+if False:  # Mudar para True quando for usar o Lora
+    import meshtastic.serial_interface
+
+    def onReceive(packet, interface):
+        print("Mensagem recebida:")
+        try:
+            data = packet['decoded']['text']
+            print(data)
+            data_dict = json.loads(data.replace("'", '"'))
+            date_str = data_dict['date']
+            date_obj = datetime.datetime.strptime(date_str, '%d/%m/%Y %H:%M:%S')
+            create_record(hash=data_dict['hash'], date=date_obj)
+        except KeyError:
+            pass
+            # print("Pacote recebido, mas sem texto")
+        except json.JSONDecodeError as e:
+            print("Erro ao decodificar JSON:", e)
+        except Exception as e:
+            print(f"erro: {e}")
 
 
-def iniciar_lora():
-    global interface
-    try:
-        interface = meshtastic.serial_interface.SerialInterface()
-        pub.subscribe(onReceive, "meshtastic.receive")
-        print("Lora ligado")
-    except Exception as e:
-        print("Erro ao iniciar o Lora:", e)
+    def iniciar_lora():
+        global interface
+        try:
+            interface = meshtastic.serial_interface.SerialInterface()
+            pub.subscribe(onReceive, "meshtastic.receive")
+            print("Lora ligado")
+        except Exception as e:
+            print("Erro ao iniciar o Lora:", e)
 
-# Inicia o Lora em uma thread separada, para não travar o Flask
-threading.Thread(target=iniciar_lora, daemon=True).start()
+    # Inicia o Lora em uma thread separada, para não travar o Flask
+    threading.Thread(target=iniciar_lora, daemon=True).start()
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -68,12 +71,20 @@ def login():
     except Exception as e:
         return jsonify({"message": "deu ruim", "error": str(e)})
 
-@app.route('/get_data', methods=['POST'])
+@app.route('/get_data', methods=['GET'])
 def get_data():
-    return 'b'
+    records = get_records()
+    records_dict = [record.to_dict() for record in records]
+    return jsonify(records_dict)
 
 if __name__ == "__main__":
     with DBConnectionHandler() as db: 
         engine = db.get_engine()
         Base.metadata.create_all(engine)
-    app.run(debug=True, host='0.0.0.0', port=8890)
+        for i in range(5):
+            now = datetime.datetime.now()
+            date = now.strftime("%d/%m/%Y %H:%M:%S")
+            create_record(hash=i, date=now)
+            print(f"Data e hora atual: {date}")
+            time.sleep(1)
+    app.run( host='0.0.0.0', port=8890)
