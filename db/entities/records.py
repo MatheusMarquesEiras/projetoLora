@@ -12,7 +12,7 @@ class Records(Base):
         return {
             "id": self.id,
             "date": self.date.strftime("%d/%m/%Y %H:%M:%S"), 
-            "value": self.hash,
+            "hash": self.hash,
         }
 
     def __repr__(self):
